@@ -109,7 +109,7 @@ impl StartCmd {
             std::process::exit(1);
         });
 
-        let primary_store = SledStore::new(db);
+        let primary_store = SledStore::new(&db);
 
         if primary_store.latest_trusted_or_verified().is_none() {
             status_err!("no trusted or verified state in store for primary, please initialize with the `initialize` subcommand first");
@@ -132,7 +132,7 @@ impl StartCmd {
             std::process::exit(1);
         });
 
-        let light_store = SledStore::new(db);
+        let light_store = SledStore::new(&db);
 
         let state = State {
             light_store: Box::new(light_store),

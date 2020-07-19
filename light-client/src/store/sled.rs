@@ -6,7 +6,7 @@ use crate::{
 };
 
 use super::{LightStore, Status};
-use ::sled::Db as SledDb;
+use sled::Db;
 
 const UNVERIFIED_PREFIX: &str = "light_store/unverified";
 const VERIFIED_PREFIX: &str = "light_store/verified";
@@ -16,7 +16,6 @@ const FAILED_PREFIX: &str = "light_store/failed";
 /// Persistent store backed by an on-disk `sled` database.
 #[derive(Debug, Clone)]
 pub struct SledStore {
-    db: SledDb,
     unverified_db: KeyValueDb<Height, LightBlock>,
     verified_db: KeyValueDb<Height, LightBlock>,
     trusted_db: KeyValueDb<Height, LightBlock>,
@@ -24,13 +23,12 @@ pub struct SledStore {
 }
 
 impl SledStore {
-    pub fn new(db: SledDb) -> Self {
+    pub fn new(db: &Db) -> Self {
         Self {
-            db,
-            unverified_db: KeyValueDb::new(UNVERIFIED_PREFIX),
-            verified_db: KeyValueDb::new(VERIFIED_PREFIX),
-            trusted_db: KeyValueDb::new(TRUSTED_PREFIX),
-            failed_db: KeyValueDb::new(FAILED_PREFIX),
+            unverified_db: key_value(&db, UNVERIFIED_PREFIX),
+            verified_db: key_value(&db, VERIFIED_PREFIX),
+            trusted_db: key_value(&db, TRUSTED_PREFIX),
+            failed_db: key_value(&db, FAILED_PREFIX),
         }
     }
 
@@ -46,7 +44,7 @@ impl SledStore {
 
 impl LightStore for SledStore {
     fn get(&self, height: Height, status: Status) -> Option<LightBlock> {
-        self.db(status).get(&self.db, &height).ok().flatten()
+        self.db(status).get(&height).ok().flatten()
     }
 
     fn update(&mut self, light_block: &LightBlock, status: Status) {
@@ -54,30 +52,30 @@ impl LightStore for SledStore {
 
         for other in Status::iter() {
             if status != *other {
-                self.db(*other).remove(&self.db, &height).ok();
+                self.db(*other).remove(&height).ok();
             }
         }
 
-        self.db(status).insert(&self.db, &height, light_block).ok();
+        self.db(status).insert(&height, light_block).ok();
     }
 
     fn insert(&mut self, light_block: LightBlock, status: Status) {
         self.db(status)
-            .insert(&self.db, &light_block.height(), &light_block)
+            .insert(&light_block.height(), &light_block)
             .ok();
     }
 
     fn remove(&mut self, height: Height, status: Status) {
-        self.db(status).remove(&self.db, &height).ok();
+        self.db(status).remove(&height).ok();
     }
 
     fn latest(&self, status: Status) -> Option<LightBlock> {
         self.db(status)
-            .iter(&self.db)
+            .iter()
             .max_by(|first, second| first.height().cmp(&second.height()))
     }
 
     fn all(&self, status: Status) -> Box<dyn Iterator<Item = LightBlock>> {
-        Box::new(self.db(status).iter(&self.db))
+        Box::new(self.db(status).iter())
     }
 }

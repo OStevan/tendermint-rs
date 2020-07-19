@@ -70,7 +70,7 @@ fn initialize_subjectively(
         std::process::exit(1);
     });
 
-    let mut light_store = SledStore::new(db);
+    let mut light_store = SledStore::new(&db);
 
     if light_store.latest_trusted_or_verified().is_some() {
         let lb = light_store.latest_trusted_or_verified().unwrap();

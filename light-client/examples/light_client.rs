@@ -93,7 +93,7 @@ fn make_instance(
         std::process::exit(1);
     });
 
-    let mut light_store = SledStore::new(db);
+    let mut light_store = SledStore::new(&db);
 
     if let Some(height) = opts.trusted_height {
         let trusted_state = io
