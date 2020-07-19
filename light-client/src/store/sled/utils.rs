@@ -10,7 +10,7 @@ use sled::{Db, Tree};
 
 /// Provides a view over the database for storing a single value at the given prefix.
 pub fn single<V>(db: &Db, prefix: impl Into<Vec<u8>>) -> SingleDb<V> {
-    SingleDb::new(db, prefix)
+    SingleDb::new(key_value(db, prefix))
 }
 
 /// Provides a view over the database for storing key/value pairs at the given prefix.
@@ -22,8 +22,8 @@ pub fn key_value<K, V>(db: &Db, prefix: impl Into<Vec<u8>>) -> KeyValueDb<K, V> 
 pub struct SingleDb<V>(KeyValueDb<(), V>);
 
 impl<V> SingleDb<V> {
-    pub fn new(db: &Db, prefix: impl Into<Vec<u8>>) -> Self {
-        Self(KeyValueDb::new(db.open_tree(prefix.into()).unwrap()))
+    pub fn new(db: KeyValueDb<(), V>) -> Self {
+        Self(db)
     }
 }
 
