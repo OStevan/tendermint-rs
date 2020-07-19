@@ -37,7 +37,6 @@ use tendermint_light_client::supervisor::Handle;
 use tendermint_light_client::supervisor::{Instance, Supervisor};
 
 /// `start` subcommand
-///
 #[derive(Command, Debug, Options)]
 pub struct StartCmd {
     /// Path to configuration file

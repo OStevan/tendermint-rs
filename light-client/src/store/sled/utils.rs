@@ -6,7 +6,7 @@ use serde::{de::DeserializeOwned, Serialize};
 use std::marker::PhantomData;
 
 use crate::errors::{Error, ErrorKind};
-use sled::{Tree, Db};
+use sled::{Db, Tree};
 
 /// Provides a view over the database for storing a single value at the given prefix.
 pub fn single<V>(db: &Db, prefix: impl Into<Vec<u8>>) -> SingleDb<V> {
@@ -64,7 +64,8 @@ where
     pub fn get(&self, key: &K) -> Result<Option<V>, Error> {
         let key_bytes = serde_cbor::to_vec(&key).map_err(|e| ErrorKind::Store.context(e))?;
 
-        let value_bytes = self.tree
+        let value_bytes = self
+            .tree
             .get(key_bytes)
             .map_err(|e| ErrorKind::Store.context(e))?;
 
@@ -81,7 +82,8 @@ where
     pub fn contains_key(&self, key: &K) -> Result<bool, Error> {
         let key_bytes = serde_cbor::to_vec(&key).map_err(|e| ErrorKind::Store.context(e))?;
 
-        let exists = self.tree
+        let exists = self
+            .tree
             .contains_key(key_bytes)
             .map_err(|e| ErrorKind::Store.context(e))?;
 
@@ -92,7 +94,8 @@ where
         let key_bytes = serde_cbor::to_vec(&key).map_err(|e| ErrorKind::Store.context(e))?;
         let value_bytes = serde_cbor::to_vec(&value).map_err(|e| ErrorKind::Store.context(e))?;
 
-        self.tree.insert(key_bytes, value_bytes)
+        self.tree
+            .insert(key_bytes, value_bytes)
             .map(|_| ())
             .map_err(|e| ErrorKind::Store.context(e))?;
 
@@ -102,14 +105,16 @@ where
     pub fn remove(&self, key: &K) -> Result<(), Error> {
         let key_bytes = serde_cbor::to_vec(&key).map_err(|e| ErrorKind::Store.context(e))?;
 
-        self.tree.remove(key_bytes)
+        self.tree
+            .remove(key_bytes)
             .map_err(|e| ErrorKind::Store.context(e))?;
 
         Ok(())
     }
 
-    pub fn iter(&self) -> impl DoubleEndedIterator<Item=V> {
-        self.tree.iter()
+    pub fn iter(&self) -> impl DoubleEndedIterator<Item = V> {
+        self.tree
+            .iter()
             .flatten()
             .map(|(_, v)| serde_cbor::from_slice(&v))
             .flatten()
